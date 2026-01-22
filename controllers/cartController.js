@@ -137,6 +137,66 @@ export const updateCartQuantity = async (req, res)=>{
     }
 }
 
+//increase cart items
+
+export const increaseCartQuantity = async (req, res) =>{
+    try{
+        const { productId } = req.body;
+
+        if(!productId){
+            return res.status(400).json({ message: "productId required"})
+        }
+
+        const cart = await Cart.findOne( { user: req.user.id })
+
+        if(!cart){
+            return res.status(404).json({ message: "Cart not found"})
+        }
+
+        const itemIndex = cart.items.findIndex(
+            (item) => item.product.toString() ===  productId
+        );
+
+        if(itemIndex === -1){
+            return res.status(404).json({ message: "Item not in cart"})
+        }
+
+        // stock check
+        const product = await Product.findById(productId);
+        if(!product){
+            return res.status(404).json({ message: "Product not found"})
+        }
+
+        if(cart.items[itemIndex].quantity >= product.stock){
+            return res.status(400).json({
+                 message: "Stock limit reached",
+
+            });
+
+            //increase quantity
+            cart.items[itemIndex].quantity += 1;
+
+            //recalculate total
+            cart.totalPrice = cart.items.reduce(
+                (sum, item) => sum + item.price * item.quantity,
+                0
+            );
+
+            await cart.save();
+
+            res.status(200).json({
+                message: "Quantity increases",
+                cart,
+            });
+        }
+    }catch(error){
+        res.status(500).json({
+            message: error.message
+        })
+    }
+}
+
+// decrease cart items
 export const decreaseCartQuantity = async (req, res) => {
     try{
         const {productId} = req.body;
@@ -151,7 +211,7 @@ export const decreaseCartQuantity = async (req, res) => {
             item => item.product.toString() === productId
         );
 
-        if(!itemIndex === -1){
+        if(itemIndex === -1){
             return res.status(404).json({ message: "Item not in cart"})
         }
 
