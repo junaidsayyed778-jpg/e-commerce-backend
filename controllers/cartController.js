@@ -137,6 +137,48 @@ export const updateCartQuantity = async (req, res)=>{
     }
 }
 
+export const decreaseCartQuantity = async (req, res) => {
+    try{
+        const {productId} = req.body;
+
+        const cart = await Cart.findOne( { user: req.user.id })
+
+        if(!cart){
+            return res.status(404).json({ message: "Cart not found"})
+        }
+
+        const itemIndex = cart.items.findIndex(
+            item => item.product.toString() === productId
+        );
+
+        if(!itemIndex === -1){
+            return res.status(404).json({ message: "Item not in cart"})
+        }
+
+        //quantity check
+        if(cart.items[itemIndex].quantity > 1){
+            cart.items[itemIndex].quantity -= 1;
+        }else{
+            cart.items.splice(itemIndex, 1);
+        }
+
+        //recalculate total
+        cart.totalPrice = cart.items.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+        );
+
+        await cart.save();
+
+        res.json({
+            message: "Quantity updated",
+            cart
+        });
+    }catch(error){
+        res.status(500).json({ message: error.message})
+    }
+}
+
 //Remove from cart
 export const removeFromCart = async(req, res) =>{
     try{
