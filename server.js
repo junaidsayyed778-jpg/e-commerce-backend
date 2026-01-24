@@ -6,6 +6,7 @@ import productRoutes from "./routes/productRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js"
 import orderRoutes from "./routes/orderRoutes.js"
 import { connectQueue } from "./utils/queue.js";
+import { startOrderConsumer } from "./consumers/orderConsumer.js";
 
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.use("/api/orders", orderRoutes)
 const startServer = async() => {
     try{
         await connectQueue();
+        startOrderConsumer();
         const PORT = process.env.PORT || 5000;
         app.listen(PORT, () => {
             console.log(` Backend runnig on port ${PORT}`)

@@ -2,6 +2,7 @@ import Cart from "../models/cart.js";
 import Order from "../models/order.js";
 import Product from "../models/product.js";
 import mongoose from "mongoose";
+import { publishOrder } from "../utils/queue.js";
 
 //place order
 
@@ -23,7 +24,8 @@ export const placeOrder = async (req, res) => {
     //validate stock for each item
 
     for(const item of cart.items){
-        const product = await Product.findById(item.product.session(session));
+            const product = await Product.findById(item.product).session(session);
+
 
         if(!product){
             throw new Error(`${product.name} is out of stock`)
@@ -65,6 +67,10 @@ export const placeOrder = async (req, res) => {
     await Cart.deleteOne({ user: userId}).session(session);
 
     await session.commitTransaction();
+
+    //publish to RabbitMQ
+    await publishOrder(order[0]);
+
     res.status(201).json({
         Message: "Order placed succefully",
         order: order[0]
