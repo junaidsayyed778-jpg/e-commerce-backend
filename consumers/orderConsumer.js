@@ -16,7 +16,7 @@ export const startOrderConsumer = async() =>{
             (msg)=>{
                 if(msg !== null){
                     const order = JSON.parse(msg.content.toString())
-                    console.log("Processing order", order)
+                    console.log("Processing order")
                 }
             },
             {noAck: false}

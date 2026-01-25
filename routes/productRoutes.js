@@ -7,8 +7,8 @@ import {
   deleteProduct,
 } from "../controllers/productController.js";
 
-import { protect, isAdmin  } from "../middlewares/authGuard.js";
-import Product from "../models/product.js";
+import { protect, isAdmin, isSeller  } from "../middlewares/authGuard.js";
+
 
 const router = express.Router();
 
@@ -23,6 +23,7 @@ router.get("/:id", getProductById);
 
 //Admin Only
 router.post("/", protect, isAdmin, createProduct);
+router.post("/", protect, isSeller, createProduct)
 router.put("/:id", protect, isAdmin, updateProduct);
 router.delete("/:id", protect, isAdmin, deleteProduct);
 

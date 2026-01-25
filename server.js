@@ -1,16 +1,21 @@
 import express from "express";
 import dotenv from "dotenv"
 import connectDB from "./config/db.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js"
 import orderRoutes from "./routes/orderRoutes.js"
+
 import { connectQueue } from "./utils/queue.js";
 import { startOrderConsumer } from "./consumers/orderConsumer.js";
 
+import { globalErrorHandler } from "./middlewares/errorMiddleware.js";
+import AppError from "./utils/AppError.js";
+
 
 dotenv.config();
-connectDB();
+
 
 const app = express();
 app.use(express.json());
@@ -23,12 +28,26 @@ app.get("/", (req, res)=>{
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/orders", orderRoutes)
+app.use("/api/orders", orderRoutes);
+
+//404 handler
+app.use( (req, res, next) => {
+    next(new AppError(`Can't find ${req.originalUrl}`, 404))
+});
+
+//gloabal error handler
+app.use(globalErrorHandler);
 
 const startServer = async() => {
     try{
+        await connectDB();
+       
+
         await connectQueue();
-        startOrderConsumer();
+     
+
+        await startOrderConsumer();
+      
         const PORT = process.env.PORT || 5000;
         app.listen(PORT, () => {
             console.log(` Backend runnig on port ${PORT}`)

@@ -17,7 +17,7 @@ export const protect = async (req, res, next) => {
 
       // Attach user to req
       req.user = await User.findById(decoded.id).select("-password");
-      return next();
+       next();
     } catch (error) {
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
@@ -36,4 +36,17 @@ export const isAdmin = (req, res, next) => {
     res.status(403).json({ message: "Admin access only" });
   }
 };
+
+//seller
+export const isSeller = (req, res, next) =>{
+  if(!req.user){
+    return res.status(401).json({message: "Unauthorized"})
+  }
+
+  if(req.user.role !== "seller"){
+    return res.status(403).json({message: 'Seller access only'})
+  }
+
+  next();
+}
 
