@@ -1,7 +1,7 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import { registerSchema, loginSchema } from "../validators/authValidators.js";
-import  jwt  from "jsonwebtoken";
+import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
 
 export const registerUser = async (req, res) => {
     try {
@@ -68,31 +68,35 @@ export const loginUser = async (req, res)=>
             return res.status(400).json({message: "Invalid email or password"})
         }
 
-        //generate jwt 
-        const token = jwt.sign(
-            {id: user._id, role: user.role},
-            process.env.JWT_SECRET,
-            {expiresIn: "7d"}
-        );
+        // token
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+
+        // save refresh token in DB
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        //send refresh token as cookie
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
         res.json({
-            message: "Login succesful",
-            token,
+            message: "Login succesfully",
+            accessToken,
             user:{
                 id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role
             }
-        })
-
+        });
       }catch(error){
          res.status(500).json({ message: error.message });
       }
 
 }
-export const isAdmin = (req, res, next) =>{
-        if(req.user.role !== "admin"){
-            return res.status(403).json({message: "Admon acces only"}) 
-        }
-        next();
-      }
+

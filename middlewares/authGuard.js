@@ -11,11 +11,13 @@ export const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
+
+      //must match access token secret
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Attach user to req
       req.user = await User.findById(decoded.id).select("-password");
-      next();
+      return next();
     } catch (error) {
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
