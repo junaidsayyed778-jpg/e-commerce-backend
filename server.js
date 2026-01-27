@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv"
 import connectDB from "./config/db.js";
+import cors from "cors";
 
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -12,13 +13,14 @@ import { startOrderConsumer } from "./consumers/orderConsumer.js";
 
 import { globalErrorHandler } from "./middlewares/errorMiddleware.js";
 import AppError from "./utils/AppError.js";
-
+import corsOptions from "./config/cors.js";
 
 dotenv.config();
 
 
 const app = express();
 app.use(express.json());
+app.use(cors(corsOptions));
 
 
 app.get("/", (req, res)=>{
