@@ -14,6 +14,7 @@ import { startOrderConsumer } from "./consumers/orderConsumer.js";
 import { globalErrorHandler } from "./middlewares/errorMiddleware.js";
 import AppError from "./utils/AppError.js";
 import corsOptions from "./config/cors.js";
+import morgan from "morgan";
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors(corsOptions));
+app.use(morgan("dev"))
+
 
 
 app.get("/", (req, res)=>{
